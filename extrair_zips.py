@@ -1,3 +1,4 @@
+# executar a extração dos arquivos: python extrair_zips.py
 import zipfile
 import os
 import logging
@@ -16,7 +17,9 @@ try:
             
             # utilizar leitura para descompactar os arquivos .zip
             with zipfile.ZipFile(caminho_completo_arquivo, 'r') as zip:
-                zip.extractall("caminho_zip")
+                # debugg: print(f"Extraindo arquivo: {arquivo}")
+                zip.extractall("arquivos_extraidos/") # colocar nome qualquer para a pasta que contem os arquivos extraidos
+
 except zipfile.BadZipFile:
     logging.error(f"Arquivo(s) Zip corrompidos/inválidos.")
 
