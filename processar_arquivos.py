@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import logging
 import glob
+import zipfile
 
 # configura logging para aparecer no terminal e realizar debugs
 logging.basicConfig(
@@ -51,55 +52,100 @@ def processar_formatos_diferentes(caminho, colunas, chunk_size):
         logging.error(f"Erro ao processar o arquivo {caminho}: {e}")
 
 
+def executar_processamento():
+    # acessa o diretório principal onde estão os arquivos extraídos
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # concatena o diretório base com a pasta dos arquivos extraídos
+    DF_DIR = os.path.join(BASE_DIR, "arquivos_extraidos")
 
-arquivos = ["1T2025.csv", "2T2025.csv", "3T2025.csv"] # declara os arquivos aqui
-colunas = [
-    'DATA',
-    'REG_ANS',
-    'CD_CONTA_CONTABIL',
-    'DESCRICAO',
-    'VL_SALDO_INICIAL',
-    'VL_SALDO_FINAL'
-] # define as colunas que serão lidas
-df_list = []
+    if not os.path.exists(DF_DIR):
+        logging.error(f"O diretório {DF_DIR} não existe.")
+        return
+    
+    colunas = [
+        'DATA',
+        'REG_ANS',
+        'CD_CONTA_CONTABIL',
+        'DESCRICAO',
+        'VL_SALDO_INICIAL',
+        'VL_SALDO_FINAL'
+    ]
+    df_list = []
 
-# percorre cada arquivo para processar os dados
-for nome_arquivo in arquivos:
-    caminho = os.path.join("arquivos_extraidos", nome_arquivo) # define o caminho
-    dataframe = processar_formatos_diferentes(caminho, colunas, chunk_size=100000)# leitura dos arquivos .csv/.txt/.xlsx/.xls em chunks de 100.000 linhas
+    # tranforma em lista e percorre os arquivos do diretório onde estão os arquivos extraídos
+    for nome_arquivo in sorted(os.listdir(DF_DIR)):
+        # verifica se o arquivo possui uma das extensões suportadas
+        if nome_arquivo.endswith(('.csv', '.txt', '.xlsx', '.xls')):
+            caminho = os.path.join(DF_DIR, nome_arquivo)
+            dataframe = processar_formatos_diferentes(caminho, colunas, chunk_size=30000)
 
-    if dataframe is None:
-        logging.error(f"Não foi possível processar o arquivo: {caminho}")
-        continue
+            if dataframe is None:
+                logging.error(f"Não foi possível processar o arquivo: {caminho}")
+                continue
 
-    """
-    DEBUG PARA SABER SE O INCREMENTO ESTÁ FUNCIONANDO, COM BASE NO CHUNK DEFINIDO ACIMA
+            """
+            DEBUG PARA SABER SE O INCREMENTO ESTÁ FUNCIONANDO, COM BASE NO CHUNK DEFINIDO ACIMA
 
-    for i, pedaco in enumerate(dataframe):
-        print(f"Lendo pedaço {i} do arquivo {arquivo}...") 
-        df_list.append(pedaco)
-    """
+            for i, pedaco in enumerate(dataframe):
+                print(f"Lendo pedaço {i} do arquivo {nome_arquivo}...") 
+                df_list.append(pedaco)
+            """
+            # para leitura correta dos chunks, necessário percorrer todas as coluna
+            for chunk in dataframe:
+                # normalizar para minúsculas
+                chunk.columns = chunk.columns.str.lower()
 
-    # para leitura correta dos chunks, necessário percorrer todas as coluna
-    for chunk in dataframe:
-        # normalizar para minúsculas
-        chunk.columns = chunk.columns.str.lower()
+                # remover espaços em branco
+                chunk['descricao'] = chunk['descricao'].astype(str).str.strip()
 
-        # remover espaços em branco
-        chunk['descricao'] = chunk['descricao'].astype(str).str.strip()
+                # aplicar filtro com regex, buscando o dado especifico
+                filtro = chunk['descricao'].str.contains(r"despesas?\s+com\s+(?:eventos?|sinistros?)", case=False, na=False)
 
-        # aplicar filtro com regex, buscando o dado especifico
-        filtro = chunk['descricao'].str.contains(r"despesas?\s+com\s+(?:eventos?|sinistros?)", case=False, na=False)
+                # adiciona a lista
+                df_list.append(chunk[filtro])
 
-        # adiciona a lista
-        df_list.append(chunk[filtro])
+            if df_list:
+                # concatena todas as partes filtradas contendo só os dados com despesas com eventos/sinistros
+                df_final = pd.concat(df_list, ignore_index=True)
 
-# concatena todas as partes filtradas contendo só os dados com despesas com eventos/sinistros
-df_final = pd.concat(df_list, ignore_index=True)
+                df_final["data"] = pd.to_datetime(df_final["data"], errors="coerce")
+                # pega a parte do ano da coluna 'data'
+                df_final["ano"] = df_final["data"].dt.year
+                # pega a parte do trimestre da coluna 'data'
+                df_final["trimestre"] = df_final["data"].dt.quarter
 
-pegar_arquivos = glob.glob("arquivos_extraidos/*.csv")
-csv_consolidado = pd.concat([pd.read_csv(f) for f in pegar_arquivos])
-csv_consolidado.to_csv("consolidado.csv", index=False, encoding='latin1')
+                # transforma os valores para númericos e subtitui a virgula para ponto, evitando erros indevidos ao formato brasileiro
+                saldo_inicial = pd.to_numeric(df_final["vl_saldo_inicial"].astype(str).str.replace(",", "."), errors="coerce")
+                saldo_final = pd.to_numeric(df_final["vl_saldo_final"].astype(str).str.replace(",", "."), errors="coerce")
+                df_final["valor_despesas"] = abs(saldo_final - saldo_inicial).round(2)
 
-# debug
-print(df_final)
+                df_final["cnpj"] = pd.NA
+                df_final["razao_social"] = pd.NA
+
+                df_consolidado = pd.DataFrame({
+                    "CNPJ": df_final.get("cnpj"),
+                    "RazaoSocial": df_final.get("razao_social"),
+                    "Ano": df_final["ano"],
+                    "Trimestre": df_final["trimestre"],
+                    "ValorDespesas": df_final["valor_despesas"]
+                })
+
+                # define o caminho so arquivo csv consolidado(so com os dados filtrados de despesas com eventos/sinistros)
+                CONSOLIDADO_DIR = os.path.join(BASE_DIR, "consolidado_despesas")
+                caminho_csv = os.path.join(CONSOLIDADO_DIR, "consolidado_despesas.csv")
+                df_consolidado.to_csv(caminho_csv, index=False, encoding="utf-8-sig", sep=";")
+
+                # compacta o arquivo csv em um zip  
+                caminho_zip = os.path.join(CONSOLIDADO_DIR, "consolidado_despesas.zip")
+
+                with zipfile.ZipFile(caminho_zip, 'w', zipfile.ZIP_DEFLATED) as zip:
+                    zip.write(caminho_csv)
+
+                # debug
+                print(df_consolidado)
+            else:
+                logging.info(f"Nenhum dado correspondente encontrado no arquivo: {caminho}")
+
+# é utilizado para garantir que o código seja executado quando executar o script(pelo terminal ou IDE), mas não quando for importado como módulo em outro script
+if __name__ == "__main__":
+    executar_processamento()
