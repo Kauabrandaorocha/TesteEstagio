@@ -1,13 +1,27 @@
 import pandas as pd
 import os
+import logging
 
-chunk_incremental = 100000 # processamento incremental para evitar quebras de memória
+def processar_formatos_diferentes(caminho, colunas, chunk_size):
+    extensao = os.path.splitext(caminho)[1].lower()
 
-arquivos_csv = ["1T2025.csv", "2T2025.csv", "3T2025.csv"] # declara os arquivos aqui
+    if extensao in ['.csv', '.txt']:
+        for sep in [';', ',', '\t']:
+            return pd.read_csv(caminho, sep=sep, usecols=colunas, chunksize=chunk_size, encoding='utf-8')
+    elif extensao in ['.xlsx', '.xls']:
+        df_full = pd.read_excel(caminho, usecols=colunas)
+        return [df_full]
+
+    else:
+        return logging.error("Formato de arquivo não suportado")
+
+
+
+arquivos = ["1T2025.csv", "2T2025.csv", "3T2025.csv"] # declara os arquivos aqui
 df_list = []
 
 # percorre cada arquivo para processar os dados
-for arquivo in arquivos_csv:
+for arquivo in arquivos:
     caminho_csv = os.path.join("arquivos_extraidos", arquivo) # define o caminho
     dataframe = pd.read_csv(caminho_csv, sep=';', usecols=['DESCRICAO'], chunksize=chunk_incremental) # leitura dos arquivos .csv
 
