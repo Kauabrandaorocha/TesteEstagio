@@ -53,7 +53,7 @@ def processar_formatos_diferentes(caminho, colunas, chunk_size):
 
 
 def executar_processamento():
-    # acessa o diretório principal onde estão os arquivos extraídos
+    # acessa o diretório principal onde estão os arquivos extraídos. ex: C:/Users/SeuUsuario/caminho/da/pasta/arquivos_extraidos
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     # concatena o diretório base com a pasta dos arquivos extraídos
     DF_DIR = os.path.join(BASE_DIR, "arquivos_extraidos")
