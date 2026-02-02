@@ -92,7 +92,7 @@ def executar_processamento():
             """
             # para leitura correta dos chunks, necessário percorrer todas as coluna
             for chunk in dataframe:
-                # normalizar para minúsculas
+                # normalizar todas as colunas para minúsculas
                 chunk.columns = chunk.columns.str.lower()
 
                 # remover espaços em branco
@@ -133,6 +133,8 @@ def executar_processamento():
                 # define o caminho so arquivo csv consolidado(so com os dados filtrados de despesas com eventos/sinistros)
                 CONSOLIDADO_DIR = os.path.join(BASE_DIR, "consolidado_despesas")
                 caminho_csv = os.path.join(CONSOLIDADO_DIR, "consolidado_despesas.csv")
+                
+                # transforma em csv
                 df_consolidado.to_csv(caminho_csv, index=False, encoding="utf-8-sig", sep=";")
 
                 # compacta o arquivo csv em um zip  
