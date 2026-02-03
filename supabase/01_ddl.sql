@@ -1,7 +1,7 @@
 -- TABELA DE DADOS CADASTRAIS DAS OPERADORAS ATIVAS 
 CREATE TABLE IF NOT EXISTS dados_cadastrais (
-    cnpj VARCHAR(14) PRIMARY KEY,
     registro_operadora VARCHAR(50),
+    cnpj VARCHAR(14) UNIQUE,
     razao_social VARCHAR(255),
     nome_fantasia VARCHAR(255),
     modalidade VARCHAR(100),
@@ -63,8 +63,8 @@ CREATE TABLE staging_despesas_agregadas (
 );
 
 CREATE TABLE staging_dados_cadastrais (
-    cnpj TEXT,
     registro_operadora TEXT,
+    cnpj TEXT,
     razao_social TEXT,
     nome_fantasia TEXT,
     modalidade TEXT,

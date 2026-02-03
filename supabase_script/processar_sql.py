@@ -20,9 +20,9 @@ def run_sql(path):
         if sql:
             cur.execute(sql)
 
-run_sql("../sql/00_drop_all.sql")
-run_sql("../sql/01_ddl.sql")
-run_sql("../sql/02_indices.sql")
+run_sql("../supabase/00_drop_all.sql")
+run_sql("../supabase/01_ddl.sql")
+run_sql("../supabase/02_indices.sql")
 conn.commit()
 
 
@@ -45,11 +45,11 @@ copy_csv("staging_consolidado_despesas", "../consolidado_despesas/consolidado_de
 copy_csv("staging_dados_cadastrais", "../dados_cadastrais/Relatorio_cadop.csv")
 copy_csv("staging_despesas_agregadas", "../despesas_agregadas/despesas_agregadas.csv")
 
-run_sql("../sql/03_importar_csv.sql")
+run_sql("../supabase/03_validacoes.sql")
 
 conn.commit()
 
-run_sql("../sql/04_queries_analiticas.sql")
+run_sql("../supabase/04_queries_analiticas.sql")
 conn.commit()
 
 cur.close()

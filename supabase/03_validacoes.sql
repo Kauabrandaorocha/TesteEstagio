@@ -39,6 +39,7 @@ WHERE
 
 -- INSERÇÃO NA TABELA DE DADOS CADASTRAIS
 INSERT INTO dados_cadastrais (
+    registro_operadora,
     cnpj,
     razao_social,
     nome_fantasia,
@@ -60,6 +61,7 @@ INSERT INTO dados_cadastrais (
     data_registro_ans
 )
 SELECT
+    NULLIF(TRIM(registro_operadora), '') AS registro_operadora,
     -- CNPJ: remove caracteres não numéricos
     REGEXP_REPLACE(cnpj, '[^0-9]', '', 'g') AS cnpj,
 
