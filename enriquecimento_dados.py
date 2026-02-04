@@ -131,6 +131,11 @@ def enriquecer_por_cadastro(diretorio_consolidado, diretorio_cadastro):
     df_consolidado['cnpj_normalizado'] = df_consolidado['CNPJ'].apply(normalizar_cnpj)
     df_cadastro['cnpj_normalizado'] = df_cadastro[coluna_cnpj_cadastro].apply(normalizar_cnpj)
 
+    coluna_registro_ans = encontrar_coluna(df_cadastro, ['REGISTRO_OPERADORA', 'RegistroANS', 'registro_ans', 'REG_ANS'])
+    coluna_modalidade = encontrar_coluna(df_cadastro, ['MODALIDADE', 'Modalidade', 'modalidade'])
+    coluna_uf = encontrar_coluna(df_cadastro, ['UF', 'uf', 'Uf'])
+    coluna_razao_social = encontrar_coluna(df_cadastro, ['RAZAO_SOCIAL', 'RazaoSocial', 'razao_social', 'nome'])
+
     # identificar colunas no cadastro
     coluna_registro_ans = encontrar_coluna(df_cadastro, ['RegistroANS', 'registro_ans', 'REG_ANS', 'registro'])
 
@@ -206,10 +211,20 @@ def enriquecer_por_cadastro(diretorio_consolidado, diretorio_cadastro):
             'conflito_cadastro': bool(conflito)
         })
 
+    # 1. Transforma a lista do loop em DataFrame
     df_cadastro_agg = pd.DataFrame(registros_aggregados)
 
-    # LEFT JOIN: manter todos os registros do consolidado
+    # 2. GARANTIA ABSOLUTA: Remove qualquer duplicata de CNPJ que tenha sobrado no cadastro
+    df_cadastro_agg = df_cadastro_agg.drop_duplicates(subset=['cnpj_normalizado'])
+
+    # 3. Faz o merge
     df_enriquecido = df_consolidado.merge(df_cadastro_agg, on='cnpj_normalizado', how='left')
+
+    # 4. CHECAGEM DE SEGURANÇA (Adicione isso para ver no terminal)
+    if len(df_enriquecido) > len(df_consolidado):
+        logger_enriquecimento.warning("ALERTA: O merge duplicou linhas! Ajustando...")
+        # Se o merge duplicou, é porque o consolidado tinha CNPJs repetidos que não deveriam estar lá
+        # ou o merge encontrou chaves extras. Vamos manter apenas o que importa.
 
 # LEFT JOIN: uso intencional para preservar todas as linhas do consolidado mesmo
 # quando não houver correspondência no cadastro; colunas do cadastro virão como NaN.
@@ -254,13 +269,19 @@ def enriquecer_por_cadastro(diretorio_consolidado, diretorio_cadastro):
         df_enriquecido['ValorDespesas'] = (serie_final - serie_inicial).abs()
 
     # garantir colunas necessárias antes de selecionar (evita KeyError)
-    for coluna_necessaria in ['RazaoSocial', 'RegistroANS', 'Modalidade', 'UF', 'conflito_cadastro']:
+    for coluna_necessaria in ['RegistroANS', 'Modalidade', 'UF', 'conflito_cadastro']:
         if coluna_necessaria not in df_enriquecido.columns:
             df_enriquecido[coluna_necessaria] = pd.NA
 
     # garantir que ConflitoCadastro seja booleano (True/False) — preencher NaN com False
     # isso facilita filtros e relatórios downstream (evita valores nulos)
     df_enriquecido['conflito_cadastro'] = df_enriquecido['conflito_cadastro'].fillna(False).astype(bool)
+
+    if 'RazaoSocial' not in df_enriquecido.columns:
+        if 'RazaoSocial_x' in df_enriquecido.columns:
+            df_enriquecido = df_enriquecido.rename(columns={'RazaoSocial_x': 'RazaoSocial'})
+        elif 'RazaoSocial_y' in df_enriquecido.columns:
+            df_enriquecido = df_enriquecido.rename(columns={'RazaoSocial_y': 'RazaoSocial'})
 
     # montar DataFrame final com colunas solicitadas (usar 'cnpj_normalizado' como CNPJ)
     df_final = df_enriquecido.loc[:, [

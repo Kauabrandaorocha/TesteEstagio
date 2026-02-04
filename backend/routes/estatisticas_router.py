@@ -6,14 +6,15 @@ estatisticas_bp = Blueprint("estatisticas", __name__)
 
 @estatisticas_bp.route("/api/estatisticas", methods=["GET"])
 def estatisticas():
-    resultado = calcular_estatisticas()
-    set_cache(resultado)
 
     if cache_valido():
         return jsonify({
             "cache": True,
             **get_cache()
         })
+
+    resultado = calcular_estatisticas()
+    set_cache(resultado)
 
     return jsonify({
         "cache": False,

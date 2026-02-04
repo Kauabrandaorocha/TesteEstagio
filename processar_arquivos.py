@@ -104,27 +104,66 @@ def executar_processamento():
                 # adiciona a lista
                 df_list.append(chunk[filtro])
 
+            mapa_cnpj = {}
+            mapa_razao = {}
+
+            try:
+                # 1. Carrega o cadastro apontando para a pasta correta
+                caminho_cad = os.path.join(BASE_DIR, "dados_cadastrais", "Relatorio_cadop.csv")
+                
+                # Lendo com encoding latin1 (padrão ANS) e separador ponto-e-vírgula
+                df_cadastral = pd.read_csv(caminho_cad, sep=';', encoding='latin1', dtype=str)
+                
+                # Limpa os nomes das colunas para evitar espaços invisíveis
+                df_cadastral.columns = [c.strip().upper() for c in df_cadastral.columns]
+                
+                # 2. CRIA O MAPA USANDO O NOME CORRETO: REGISTRO_OPERADORA
+                # Usamos .get() ou checagem direta para evitar novos erros de coluna
+                if 'REGISTRO_OPERADORA' in df_cadastral.columns:
+                    mapa_cnpj = df_cadastral.set_index('REGISTRO_OPERADORA')['CNPJ'].to_dict()
+                    mapa_razao = df_cadastral.set_index('REGISTRO_OPERADORA')['RAZAO_SOCIAL'].to_dict()
+                    logging.info("Mapeamento REGISTRO_OPERADORA -> CNPJ carregado com sucesso!")
+                else:
+                    logging.error(f"Coluna REGISTRO_OPERADORA não encontrada. Colunas disponíveis: {df_cadastral.columns.tolist()}")
+
+            except Exception as e:
+                logging.error(f"Erro ao carregar cadastro: {e}")
+
             if df_list:
-                # concatena todas as partes filtradas contendo só os dados com despesas com eventos/sinistros
+                # 1. Concatena os dados brutos filtrados
                 df_final = pd.concat(df_list, ignore_index=True)
 
-                df_final["data"] = pd.to_datetime(df_final["data"], errors="coerce")
-                # pega a parte do ano da coluna 'data'
-                df_final["ano"] = df_final["data"].dt.year
-                # pega a parte do trimestre da coluna 'data'
-                df_final["trimestre"] = df_final["data"].dt.quarter
+                # 2. Carrega o Cadastro (Ponte) - FORA DO TRY PARA VOCÊ VER ERROS SE OCORREREM
+                caminho_cad = os.path.join(BASE_DIR, "dados_cadastrais", "Relatorio_cadop.csv")
+                df_cadastral = pd.read_csv(caminho_cad, sep=';', encoding='latin1', dtype=str)
+                
+                # Normaliza colunas do cadastro para garantir o match
+                df_cadastral.columns = [c.strip().upper() for c in df_cadastral.columns]
 
-                # transforma os valores para númericos e subtitui a virgula para ponto, evitando erros indevidos ao formato brasileiro
+                # Criando os dicionários usando o nome que você confirmou: REGISTRO_OPERADORA
+                mapa_cnpj = df_cadastral.set_index('REGISTRO_OPERADORA')['CNPJ'].to_dict()
+                mapa_razao = df_cadastral.set_index('REGISTRO_OPERADORA')['RAZAO_SOCIAL'].to_dict()
+
+                # 3. Processa datas e valores
+                df_final["data"] = pd.to_datetime(df_final["data"], errors="coerce")
+                df_final["ano"] = df_final["data"].dt.year
+                df_final["trimestre"] = df_final["data"].dt.quarter
+                
                 saldo_inicial = pd.to_numeric(df_final["vl_saldo_inicial"].astype(str).str.replace(",", "."), errors="coerce")
                 saldo_final = pd.to_numeric(df_final["vl_saldo_final"].astype(str).str.replace(",", "."), errors="coerce")
                 df_final["valor_despesas"] = abs(saldo_final - saldo_inicial).round(2)
 
-                df_final["cnpj"] = pd.NA
-                df_final["razao_social"] = pd.NA
+                # 4. PREENCHE O CNPJ E RAZÃO SOCIAL USANDO O REG_ANS DO ARQUIVO DE DESPESAS
+                df_final['reg_ans_str'] = df_final['reg_ans'].astype(str).str.replace('.0', '', regex=False).str.strip()
+                
+                # Aqui a mágica acontece: ele troca o código ANS pelo CNPJ real
+                df_final["cnpj"] = df_final["reg_ans_str"].map(mapa_cnpj)
+                df_final["razao_social"] = df_final["reg_ans_str"].map(mapa_razao)
 
+                # 5. Gera o DataFrame com as colunas EXATAS do edital
                 df_consolidado = pd.DataFrame({
-                    "CNPJ": df_final.get("cnpj"),
-                    "RazaoSocial": df_final.get("razao_social"),
+                    "CNPJ": df_final["cnpj"],
+                    "RazaoSocial": df_final["razao_social"],
                     "Ano": df_final["ano"],
                     "Trimestre": df_final["trimestre"],
                     "ValorDespesas": df_final["valor_despesas"]

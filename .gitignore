@@ -216,6 +216,5 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Arquivos Brutos
-arquivos_extraidos/
 .vscode/
 consolidado_validado/

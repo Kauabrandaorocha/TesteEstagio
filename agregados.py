@@ -84,8 +84,12 @@ def executar_agregacao():
     os.makedirs(pasta_saida, exist_ok=True)
     caminho_saida_csv = os.path.join(pasta_saida, "despesas_agregadas.csv")
 
-    df_agregado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+    df_agregado.to_csv(caminho_saida_csv, index=False, sep=';', decimal=',', encoding='utf-8-sig')
     logger.info("Arquivo de agregação salvo em: %s (linhas=%d)", caminho_saida_csv, len(df_agregado))
+
+    logger.info("Linhas antes da limpeza: %d", len(df))
+    df = df.drop_duplicates()
+    logger.info("Linhas após remover duplicatas exatas: %d", len(df))
 
     # compactar em zip na mesma pasta
     caminho_zip = os.path.join(pasta_saida, f"Teste_{NOME_AUTOR}.zip")

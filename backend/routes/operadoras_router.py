@@ -6,10 +6,13 @@ operadoras_bp = Blueprint("operadoras", __name__)
 
 @operadoras_bp.route("/api/operadoras", methods=["GET"])
 def listar_operadoras():
-    page = int(request.args.get("page", 1, type=int))
-    limit = int(request.args.get("limit", 10, type=int))
+    page = request.args.get("page", 1, type=int)
+    limit = request.args.get("limit", 10, type=int)
+    # Captura o parâmetro 'search' ou 'q' da URL
+    search = request.args.get("search", type=str)
 
-    response = operadoras_controller.lista_operadoras(page, limit)
+    # Passa o search para o controller
+    response = operadoras_controller.lista_operadoras(page, limit, search)
     return jsonify(response)
 
 

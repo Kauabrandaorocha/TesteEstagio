@@ -3,14 +3,15 @@ from services import operadoras_service
 from utils import validar_cnpj
 
 
-def lista_operadoras(page, limit):
+def lista_operadoras(page, limit, search=None):
     offset = (page - 1) * limit
 
     conn = get_db_connection()
     cur = conn.cursor()
 
-    total = operadoras_service.contar_operadoras(cur)
-    rows = operadoras_service.listar_operadoras(cur, limit, offset)
+    # Passamos o search tanto para contar (paginação correta) quanto para listar
+    total = operadoras_service.contar_operadoras(cur, search)
+    rows = operadoras_service.listar_operadoras(cur, limit, offset, search)
 
     cur.close()
     conn.close()
@@ -26,7 +27,7 @@ def lista_operadoras(page, limit):
             "page": page,
             "limit": limit,
             "total": total,
-            "total_pages": (total + limit - 1) // limit
+            "total_pages": (total + limit - 1) // limit if limit > 0 else 0
         }
     }
 
@@ -76,37 +77,43 @@ def detalhe_operadora(cnpj):
 
 def despesas_operadora(cnpj, page, limit):
     cnpj_limpo = validar_cnpj.limpar_cnpj(cnpj)
-
     if not validar_cnpj.cnpj_valido(cnpj_limpo):
         return None, "CNPJ inválido"
 
     offset = (page - 1) * limit
-
     conn = get_db_connection()
     cur = conn.cursor()
 
-    total = operadoras_service.contar_despesas(cur, cnpj_limpo)
-    rows = operadoras_service.listar_despesas(cur, cnpj_limpo, limit, offset)
+    try:
+        # Busca a lista e o total para a paginação
+        total_registros = operadoras_service.contar_despesas(cur, cnpj_limpo)
+        rows = operadoras_service.listar_despesas(cur, cnpj_limpo, limit, offset)
+        
+        # Busca os indicadores (o que estava faltando no seu log!)
+        indicadores = operadoras_service.obter_indicadores_financeiros(cur, cnpj_limpo)
 
-    cur.close()
-    conn.close()
+        despesas = [
+            {"ano": r[0], "trimestre": r[1], "valor_despesas": float(r[2]) if r[2] else 0}
+            for r in rows
+        ]
 
-    despesas = [
-        {
-            "ano": r[0],
-            "trimestre": r[1],
-            "valor_despesas": float(r[2]) if r[2] else None
-        }
-        for r in rows
-    ]
+        # MONTAGEM DO OBJETO DE RESPOSTA
+        return {
+            "cnpj": cnpj_limpo,
+            "data": despesas,
+            "estatisticas": {  # <--- SE ISSO ESTIVER AQUI, APARECE NO CONSOLE
+                "total_acumulado": indicadores["total_valor"],
+                "media_trimestral": indicadores["media_valor"],
+                "qtd_registros": total_registros
+            },
+            "meta": {
+                "page": page,
+                "limit": limit,
+                "total": total_registros,
+                "total_pages": (total_registros + limit - 1) // limit if limit > 0 else 0
+            }
+        }, None
 
-    return {
-        "cnpj": cnpj_limpo,
-        "data": despesas if despesas else ["Nao foi encontrado no banco despesas relacionadas a operadora solicitada."],
-        "meta": {
-            "page": page,
-            "limit": limit,
-            "total": total,
-            "total_pages": (total + limit - 1) // limit
-        }
-    }, None
+    finally:
+        cur.close()
+        conn.close()
