@@ -1,0 +1,243 @@
+{
+  "info": {
+    "name": "API Operadoras",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection gerada automaticamente a partir do código fonte Flask. Contém endpoints para operadoras, despesas e estatísticas, com exemplos de resposta."
+  },
+  "item": [
+    {
+      "name": "Operadoras",
+      "item": [
+        {
+          "name": "Listar Operadoras",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/operadoras?page=1&limit=10&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "operadoras"],
+              "query": [
+                {"key": "page", "value": "1", "description": "Número da página (padrão: 1)"},
+                {"key": "limit", "value": "10", "description": "Itens por página (padrão: 10)"},
+                {"key": "search", "value": "", "description": "Termo de busca (opcional)"}
+              ]
+            },
+            "description": "Lista operadoras com paginação e filtro de busca opcional."
+          },
+          "response": [
+            {
+              "name": "200 OK - Lista paginada",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras?page=1&limit=10&search=",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras"],
+                  "query": [
+                    {"key": "page", "value": "1"},
+                    {"key": "limit", "value": "10"},
+                    {"key": "search", "value": ""}
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "{\n  \"page\": 1,\n  \"limit\": 10,\n  \"total\": 123,\n  \"items\": [\n    {\n      \"cnpj\": \"12345678000199\",\n      \"razao_social\": \"Operadora Exemplo S.A.\",\n      \"nome_fantasia\": \"Operadora Exemplo\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Detalhe Operadora por CNPJ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/operadoras/{{cnpj}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "operadoras", "{{cnpj}}"]
+            },
+            "description": "Obtém detalhes de uma operadora pelo CNPJ. Retorna 400 para CNPJ inválido e 404 se não encontrado."
+          },
+          "response": [
+            {
+              "name": "200 OK - Detalhe",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras/{{cnpj}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras", "{{cnpj}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"cnpj\": \"12345678000199\",\n  \"razao_social\": \"Operadora Exemplo S.A.\",\n  \"nome_fantasia\": \"Operadora Exemplo\",\n  \"situacao\": \"ATIVA\"\n}"
+            },
+            {
+              "name": "400 Bad Request - CNPJ inválido",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras/{{cnpj}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras", "{{cnpj}}"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"erro\": \"CNPJ inválido\"\n}"
+            },
+            {
+              "name": "404 Not Found - Não encontrado",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras/{{cnpj}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras", "{{cnpj}}"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"erro\": \"Operadora não encontrada\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Despesas da Operadora",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/operadoras/{{cnpj}}/despesas?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "operadoras", "{{cnpj}}", "despesas"],
+              "query": [
+                {"key": "page", "value": "1", "description": "Número da página (padrão: 1)"},
+                {"key": "limit", "value": "10", "description": "Itens por página (padrão: 10)"}
+              ]
+            },
+            "description": "Lista despesas de uma operadora por CNPJ, com paginação."
+          },
+          "response": [
+            {
+              "name": "200 OK - Lista paginada",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras/{{cnpj}}/despesas?page=1&limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras", "{{cnpj}}", "despesas"],
+                  "query": [
+                    {"key": "page", "value": "1"},
+                    {"key": "limit", "value": "10"}
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"page\": 1,\n  \"limit\": 10,\n  \"total\": 57,\n  \"items\": [\n    {\n      \"competencia\": \"2024-01\",\n      \"valor\": 12345.67,\n      \"descricao\": \"Despesa exemplo\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "400 Bad Request - Erro de parâmetros",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras/{{cnpj}}/despesas?page=0&limit=-1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras", "{{cnpj}}", "despesas"],
+                  "query": [
+                    {"key": "page", "value": "0"},
+                    {"key": "limit", "value": "-1"}
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"erro\": \"Parâmetros de paginação inválidos\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Estatísticas",
+      "item": [
+        {
+          "name": "Obter Estatísticas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estatisticas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estatisticas"]
+            },
+            "description": "Retorna estatísticas consolidadas. A resposta indica se veio do cache (cache: true/false)."
+          },
+          "response": [
+            {
+              "name": "200 OK - Com cache",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/estatisticas",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "estatisticas"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"cache\": true,\n  \"total_operadoras\": 100,\n  \"total_despesas\": 999999.99\n}"
+            },
+            {
+              "name": "200 OK - Sem cache",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/estatisticas",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "estatisticas"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"cache\": false,\n  \"total_operadoras\": 100,\n  \"total_despesas\": 999999.99\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {"key": "baseUrl", "value": "http://127.0.0.1:5000", "description": "URL base da API Flask"},
+    {"key": "cnpj", "value": "00000000000000", "description": "CNPJ da operadora (14 dígitos)"}
+  ]
+}

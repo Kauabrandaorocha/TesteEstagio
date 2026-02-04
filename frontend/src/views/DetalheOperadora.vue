@@ -91,7 +91,12 @@ const formatarMoeda = (valor: number) => {
           <div class="card">
             <h3>Evolução Financeira (Despesas)</h3>
             <HistoryChart v-if="despesas.length" :historico="despesas" />
-            <div v-else class="no-data">Nenhum histórico de despesas encontrado.</div>
+
+            <div v-else class="no-data-alert">
+              <div class="icon-info"></div>
+              <p>Nenhum registro financeiro encontrado para esta operadora.</p>
+              <small>Isso pode ocorrer se a operadora não tiver enviado dados à ANS no período consultado.</small>
+            </div>
           </div>
         </main>
       </div>
