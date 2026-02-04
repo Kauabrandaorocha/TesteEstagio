@@ -82,20 +82,19 @@ venv\scripts\activate
 pip install -r requirements.txt
 ```
 
-## 📥 Passo 1 – Baixar e Extrair Arquivos
+## 📥 Passo 1 – Preparação do Ambiente e Extração
+Execute o comando inicial:
 
-Execute:
 ```bash
-python extrair_zips.py
+python scripts/extrair_zips.py
 ```
+O que este script faz:
 
-Este script irá:
+- **Autoconfiguração de Pastas**: Cria automaticamente toda a estrutura de diretórios necessária para o fluxo de dados (arquivos_extraidos, consolidado_despesas, dados_enriquecidos, etc.), garantindo que o projeto funcione mesmo se as pastas de destino não existirem.
 
-- Localizar os últimos 3 trimestres disponíveis
+- **Extração de Dados**: Localiza os arquivos ZIP dos últimos 3 trimestres na pasta arquivoszip e extrai os CSVs brutos para a pasta de processamento.
 
-- Baixar os arquivos ZIP
-
-- Extrair automaticamente os arquivos para a pasta de dados
+- **Nota**: Certifique-se de que seus arquivos .zip originais e o arquivo Relatorio_cadop.csv estejam em suas respectivas pastas dentro de arquivos_csv_zips/ antes de iniciar.
 
 ## 📊 Passo 2 – Processar e Consolidar Dados
 
