@@ -94,7 +94,7 @@ O que este script faz:
 
 - **Extração de Dados**: Localiza os arquivos ZIP dos últimos 3 trimestres na pasta arquivoszip e extrai os CSVs brutos para a pasta de processamento.
 
-- **Nota**: Certifique-se de que seus arquivos .zip originais e o arquivo Relatorio_cadop.csv estejam em suas respectivas pastas dentro de arquivos_csv_zips/ antes de iniciar.
+- **Nota**: Certifique-se de que seus arquivos `.zip` originais e o arquivo `Relatorio_cadop.csv` estejam em suas respectivas pastas dentro de `arquivos_csv_zips/` antes de iniciar.
 
 ## 📊 Passo 2 – Processar e Consolidar Dados
 
