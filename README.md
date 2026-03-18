@@ -1,4 +1,4 @@
-# 📊 Teste Técnico – Integração com API Pública ANS
+# 📊 Sistema de Ingestão e Análise de Dados de Saúde (ANS)
 Parte 1 – Coleta, Processamento e Consolidação de Dados
 ## 📌 Objetivo
 
@@ -768,3 +768,6 @@ Acesse http://localhost:5173 no navegador.
 - Detalhamento individual com gráfico de evolução histórica de despesas.
 
 - Tratamento de zeros à esquerda em CNPJs para integridade de dados.
+
+## Observações Finais
+- Este projeto foi desenvolvido como parte de um desafio técnico, focando em boas práticas de engenharia de dados, performance e escalabilidade.
